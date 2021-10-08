@@ -116,34 +116,39 @@ export class PLP extends Component {
 			if (path === '') {
 				return data.categories.map((i) =>
 					i.products.map((product, index) => (
-						<NavLink
-							className='product-navlink'
-							to={`/id/${product.id}`}
-							key={'product-navlink' + index}
-						>
-							<div
-								className={product.inStock ? 'product-wrapper' : 'unavailable'}
+						<div>
+							<NavLink
+								className='product-navlink'
+								to={`/id/${product.id}`}
+								key={'product-navlink' + index}
 							>
-								<img
-									alt='plp product'
-									src={product.gallery[0]}
-									width='338px'
-									height='356px'
-								></img>
-								<p>
-									{product.brand} {product.name}
-								</p>
-								<img
-									alt='to add to cart from plp'
-									id={product.id}
-									className='add-cart-btn'
-									src={CART}
-									width='46px'
-									onClick={this.addItemToCart}
-								></img>
-								{this.getPrice(product)}
-							</div>
-						</NavLink>
+								<div
+									className={
+										product.inStock ? 'product-wrapper' : 'unavailable'
+									}
+								>
+									<img
+										alt='plp product'
+										src={product.gallery[0]}
+										width='338px'
+										height='356px'
+									></img>
+									<p>
+										{product.brand} {product.name}
+									</p>
+
+									{this.getPrice(product)}
+								</div>
+							</NavLink>
+							<img
+								alt='to add to cart from plp'
+								id={product.id}
+								className='add-cart-btn'
+								src={CART}
+								width='46px'
+								onClick={this.addItemToCart}
+							></img>
+						</div>
 					))
 				);
 			} else {
