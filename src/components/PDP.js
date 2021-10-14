@@ -75,7 +75,7 @@ export class PDP extends Component {
 			this.setState({
 				attributes: { ...this.state.attributes, ...attributes },
 			});
-			
+
 			if (
 				arrOfName.find(
 					(element) =>
@@ -294,13 +294,13 @@ export class PDP extends Component {
 				onClick={
 					this.props.currencyIsOpen
 						? () => this.props.handleCurrency(false)
-						: ''
+						: () => {}
 				}
 			>
 				<div>{this.getDetails()}</div>
 				{this.props.cartIsOpen ? (
 					<div
-						class='cart-backdrop'
+						className='cart-backdrop'
 						onClick={() => this.props.openCart(false)}
 						style={{
 							height: document.documentElement.offsetHeight,

@@ -80,7 +80,6 @@ export class Header extends Component {
 
 	getCategory() {
 		let data = this.props.data;
-		console.log(data);
 		if (data.loading) {
 			return '';
 		} else {
@@ -277,7 +276,7 @@ export class Header extends Component {
 							? () => this.props.openCart(false)
 							: this.props.currencyIsOpen
 							? () => this.props.handleCurrency(false)
-							: ''
+							: () => {}
 					}
 					className='nav-container'
 				>
@@ -318,7 +317,6 @@ export class Header extends Component {
 						</div>
 						<div>
 							{Object.keys(this.props.attributes).map((item, index) => {
-								console.log(this.props.attributes);
 								return this.createCart(item, index);
 							})}
 						</div>

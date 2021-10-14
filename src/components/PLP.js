@@ -112,7 +112,12 @@ export class PLP extends Component {
 	productsForStartPage = () => {
 		let data = this.props.data;
 		return data.category.products.map((product, index) => (
-			<div className={product.inStock ? 'product-wrapper' : 'unavailable'}>
+			<div
+				className={product.inStock ? 'product-wrapper' : 'unavailable'}
+				key={
+					product.inStock ? 'product-wrapper' + index : 'unavailable' + index
+				}
+			>
 				<NavLink
 					className='product-navlink'
 					to={`/id/${product.id}`}
@@ -196,7 +201,7 @@ export class PLP extends Component {
 				onClick={
 					this.props.currencyIsOpen
 						? () => this.props.handleCurrency(false)
-						: ''
+						: () => {}
 				}
 			>
 				<h1>
@@ -208,7 +213,7 @@ export class PLP extends Component {
 				<div className='plp-div'>{this.getProducts()}</div>
 				{this.props.cartIsOpen ? (
 					<div
-						class='cart-backdrop'
+						className='cart-backdrop'
 						onClick={this.close}
 						style={{
 							height: document.documentElement.offsetHeight,

@@ -81,17 +81,18 @@
 .next-pic {
 	cursor: pointer;
 	position: relative;
-	right: 15px;
-	bottom: 75px;
+
 	padding: 3px 2px 3px 3px;
 	transition: 0.3s ease-in-out;
+	left: 150px;
+	bottom: 122px;
 }
 .prev-pic {
 	cursor: pointer;
 	position: relative;
 	padding: 3px 3px 3px 2px;
 	left: 15px;
-	bottom: 75px;
+	top: 100px;
 	transition: 0.3s ease-in-out;
 }
 .next-pic:hover {

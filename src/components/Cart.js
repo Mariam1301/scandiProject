@@ -275,6 +275,7 @@ export class Cart extends Component {
 									-
 								</button>
 							</div>
+
 							{this.getImages(cartProduct, id)}
 						</div>
 					</div>
@@ -289,7 +290,7 @@ export class Cart extends Component {
 				onClick={
 					this.props.currencyIsOpen
 						? () => this.props.handleCurrency(false)
-						: ''
+						: () => {}
 				}
 			>
 				<h1 className='cart-title'>CART</h1>
@@ -300,7 +301,7 @@ export class Cart extends Component {
 				</div>
 				{this.props.cartIsOpen ? (
 					<div
-						class='cart-backdrop'
+						className='cart-backdrop'
 						onClick={() => this.props.openCart(false)}
 						style={{
 							height: document.documentElement.offsetHeight,

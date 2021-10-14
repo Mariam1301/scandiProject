@@ -92,8 +92,6 @@ export const setCategoryReducer = (state = initialState, action) => {
 export const addAttributesReducer = (state = initialState, action) => {
 	switch (action.type) {
 		case ADD_ATTRIBUTES:
-			console.log(action.key);
-			console.log(action.attributes);
 			return {
 				...state,
 				attributes: { ...state.attributes, [action.key]: action.attributes },
@@ -123,7 +121,6 @@ export const addAttributesReducer = (state = initialState, action) => {
 			};
 
 		case CHANGE_ATTRIBUTE:
-			console.log(action.id);
 			return {
 				...state,
 				attributes: {
