@@ -7,6 +7,7 @@ import '../styles/header.css';
 import LOGO from '../images/scandi-logo.svg';
 import dropDown from '../images/scandi-dropdown-arrow.svg';
 import emptyCart from '../images/Empty Cart.svg';
+import arrowUp from '../images/arrow-up.svg';
 import {
 	incrementAction,
 	decrementAction,
@@ -288,7 +289,10 @@ export class Header extends Component {
 						<div className='nav-currency'>
 							<button onClick={this.openCurrency}>
 								{this.state.currencies[this.props.activeCurrency]}{' '}
-								<img src={dropDown} alt='dropdown'></img>
+								<img
+									src={this.props.currencyIsOpen ? arrowUp : dropDown}
+									alt='dropdown'
+								></img>
 							</button>
 
 							{this.props.currencyIsOpen ? (

@@ -25,6 +25,10 @@
 	cursor: pointer;
 	color: #1d1f22;
 	font-size: 20px;
+	font-family: Raleway;
+}
+.nav-currency img {
+	margin-bottom: 3px;
 }
 
 .currency-cart {
@@ -208,6 +212,9 @@ media 450px
 ---------------------------------------------*/
 
 @media (max-width: 450px) {
+	.cart-div img {
+		width: 15px;
+	}
 	.nav-buttons a {
 		font-size: 14px;
 	}
