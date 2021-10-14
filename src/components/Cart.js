@@ -10,12 +10,14 @@ import {
 	incrementQuantityAction,
 	changeAttributeAction,
 	deleteItemAction,
+	currencyOpenAction,
 } from '../redux/actions/actions';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { setCategoryAction } from '../redux/actions/actions';
 import nextPic from '../images/nextPic.svg';
 import prevPic from '../images/prevPic.svg';
+import cart from '../styles/cart.css';
 const CATEGORY = gql`
 	{
 		categories {
@@ -29,6 +31,7 @@ const CATEGORY = gql`
 				gallery
 				attributes {
 					id
+					type
 					name
 					items {
 						displayValue
@@ -124,6 +127,101 @@ export class Cart extends Component {
 			});
 		}
 	};
+	getAttributes = (cartProduct, id) => {
+		return cartProduct.attributes.map((att, index) => (
+			<form key={'cart-form' + index}>
+				<div>
+					<p>{att.name}</p>
+
+					<div className='cart-cont-attributes-div'>
+						{att.items.map((item, index) => (
+							<div
+								key={
+									att.type === 'swatch'
+										? 'cart-cont-color-attributes' + index
+										: 'cart-cont-attributes' + index
+								}
+								className={
+									att.type === 'swatch'
+										? 'cart-cont-color-attributes'
+										: 'cart-cont-attributes'
+								}
+								onClick={() => this.changeAttribute(id, att.name, item.value)}
+							>
+								<input
+									defaultChecked={
+										this.props.attributes[id][att.name] === item.value
+									}
+									type='radio'
+									name={att.name}
+									id={
+										att.type === 'swatch'
+											? item.value + att.name + cartProduct.id
+											: id + item.value + att.name + cartProduct.id
+									}
+									value={item.value}
+								></input>
+								{att.type === 'swatch' ? (
+									<label
+										htmlFor={item.value + att.name + cartProduct.id}
+										style={{
+											background: item.value,
+											color: item.value,
+										}}
+									></label>
+								) : (
+									<label htmlFor={id + item.value + att.name + cartProduct.id}>
+										{item.value}
+									</label>
+								)}
+							</div>
+						))}
+					</div>
+				</div>
+			</form>
+		));
+	};
+	getImages = (cartProduct, id) => {
+		return (
+			<div className='cart-img-div'>
+				{cartProduct.gallery.length > 1 ? (
+					<img
+						alt='previous arrow'
+						className='prev-pic'
+						src={prevPic}
+						id={id}
+						onClick={this.prevPic}
+					></img>
+				) : (
+					''
+				)}
+				<Link
+					to={`/id/${id.substring(id.lastIndexOf('/') + 2)}`}
+					onClick={() => this.props.openCart(false)}
+				>
+					<img
+						alt='product'
+						className='product-pic'
+						src={cartProduct.gallery[this.state.picIndex[id]]}
+						width='141px'
+						height='185px'
+					></img>
+				</Link>
+
+				{cartProduct.gallery.length > 1 ? (
+					<img
+						alt='next arrow'
+						className='next-pic'
+						src={nextPic}
+						id={id}
+						onClick={this.nextPic}
+					></img>
+				) : (
+					''
+				)}
+			</div>
+		);
+	};
 	getProducts = (id, index) => {
 		let data = this.props.data;
 		if (data.loading) {
@@ -155,107 +253,10 @@ export class Cart extends Component {
 							</p>
 							<div>
 								{cartProduct.attributes.length !== 0
-									? cartProduct.attributes.map((att, index) => (
-											<form key={'cart-form' + index}>
-												{att.name === 'Color' ? (
-													<div>
-														<p>{att.name}</p>
-
-														<div className='cart-cont-attributes-div'>
-															{att.items.map((item, index) => (
-																<div
-																	key={'cart-cont-color-attributes' + index}
-																	className='cart-cont-color-attributes'
-																	onClick={() =>
-																		this.changeAttribute(
-																			id,
-																			att.name,
-																			item.value
-																		)
-																	}
-																>
-																	<input
-																		defaultChecked={
-																			this.props.attributes[id][att.name] ===
-																			item.value
-																		}
-																		type='radio'
-																		name={att.name}
-																		id={item.value + att.name + cartProduct.id}
-																		value={item.value}
-																	></input>
-
-																	<label
-																		htmlFor={
-																			item.value + att.name + cartProduct.id
-																		}
-																		style={{
-																			background: item.value,
-																			color: item.value,
-																			display: 'inline-block',
-																			border: 1,
-																			borderColor: '#000',
-																			borderStyle: 'solid',
-																			width: 20,
-																			height: 20,
-																		}}
-																	></label>
-																</div>
-															))}
-														</div>
-													</div>
-												) : (
-													<div>
-														<p>{att.name}</p>
-														<div className='cart-cont-attributes-div'>
-															{att.items.map((item, index) => (
-																<div
-																	key={'cart-cont-attributes' + index}
-																	className='cart-cont-attributes'
-																	onClick={() =>
-																		this.changeAttribute(
-																			id,
-																			att.name,
-																			item.value
-																		)
-																	}
-																>
-																	<input
-																		defaultChecked={
-																			this.props.attributes[id][att.name] ===
-																			item.value
-																		}
-																		type='radio'
-																		name={att.name}
-																		id={
-																			id +
-																			item.value +
-																			att.name +
-																			cartProduct.id
-																		}
-																		value={item.value}
-																	></input>
-
-																	<label
-																		htmlFor={
-																			id +
-																			item.value +
-																			att.name +
-																			cartProduct.id
-																		}
-																	>
-																		{item.value}
-																	</label>
-																</div>
-															))}
-														</div>
-													</div>
-												)}
-											</form>
-									  ))
+									? this.getAttributes(cartProduct, id)
 									: ''}
 							</div>
-						</div>{' '}
+						</div>
 						<div className='cart-img-quantity-div'>
 							<div className='cart-cont-nav-quantity'>
 								<button
@@ -274,43 +275,7 @@ export class Cart extends Component {
 									-
 								</button>
 							</div>
-							<div className='cart-img-div'>
-								{cartProduct.gallery.length > 1 ? (
-									<img
-										alt='previous arrow'
-										className='prev-pic'
-										src={prevPic}
-										id={id}
-										onClick={this.prevPic}
-									></img>
-								) : (
-									''
-								)}
-								<Link
-									to={`/id/${id.substring(id.lastIndexOf('/') + 2)}`}
-									onClick={() => this.props.openCart(false)}
-								>
-									<img
-										alt='product'
-										className='product-pic'
-										src={cartProduct.gallery[this.state.picIndex[id]]}
-										width='141px'
-										height='185px'
-									></img>
-								</Link>
-
-								{cartProduct.gallery.length > 1 ? (
-									<img
-										alt='next arrow'
-										className='next-pic'
-										src={nextPic}
-										id={id}
-										onClick={this.nextPic}
-									></img>
-								) : (
-									''
-								)}
-							</div>
+							{this.getImages(cartProduct, id)}
 						</div>
 					</div>
 				</div>
@@ -319,7 +284,14 @@ export class Cart extends Component {
 	};
 	render() {
 		return (
-			<div className='cart-container'>
+			<div
+				className='cart-container'
+				onClick={
+					this.props.currencyIsOpen
+						? () => this.props.handleCurrency(false)
+						: ''
+				}
+			>
 				<h1 className='cart-title'>CART</h1>
 				<div className='cart'>
 					{Object.keys(this.props.attributes).map((item, index) => {
@@ -328,15 +300,10 @@ export class Cart extends Component {
 				</div>
 				{this.props.cartIsOpen ? (
 					<div
+						class='cart-backdrop'
 						onClick={() => this.props.openCart(false)}
 						style={{
-							width: '100%',
 							height: document.documentElement.offsetHeight,
-							background: 'black',
-							opacity: 0.5,
-							position: 'absolute',
-							top: '79px',
-							left: 0,
 						}}
 					></div>
 				) : (
@@ -353,6 +320,7 @@ const mapStateToProps = (state) => {
 		itemList: state.addItem.cartProducts,
 		attributes: state.addAttributes.attributes,
 		cartIsOpen: state.openCart.cartIsOpen,
+		currencyIsOpen: state.currencyIsOpen.currencyIsOpen,
 	};
 };
 
@@ -386,6 +354,9 @@ const mapDispatchToProps = (dispatch) => {
 		},
 		deleteItem: (id, attributes) => {
 			dispatch(deleteItemAction(id, attributes));
+		},
+		handleCurrency: (value) => {
+			dispatch(currencyOpenAction(value));
 		},
 	};
 };

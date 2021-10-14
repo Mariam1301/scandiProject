@@ -7,31 +7,32 @@ import {
 	incrementAction,
 	createAttributeAction,
 	openCartAction,
+	currencyOpenAction,
 } from '../redux/actions/actions';
+import ReactHtmlParser from 'react-html-parser';
+import pdp from '../styles/pdp.css';
 const DETAILS = gql`
-	{
-		categories {
+	query getProduct($id: String!) {
+		product(id: $id) {
 			name
-			products {
-				id
-				description
-				category
+			id
+			inStock
+			gallery
+			description
+			category
+			attributes {
+				type
 				name
-				brand
-				gallery
-				attributes {
-					id
-					name
-					items {
-						displayValue
-						value
-					}
-				}
-				prices {
-					currency
-					amount
+				items {
+					value
+					displayValue
 				}
 			}
+			prices {
+				currency
+				amount
+			}
+			brand
 		}
 	}
 `;
@@ -62,41 +63,50 @@ export class PDP extends Component {
 		});
 	};
 	addItemToCart = (e) => {
-		let products = this.props.data.categories.map((item) =>
-			item.products.filter((product) => product.id === e.target.id)
-		);
-		let [[product]] = products.filter((i) => i.length !== 0);
-
+		let product = this.props.data.product;
 		let price = product.prices;
-
 		let arrOfName = Object.keys(this.props.attributes);
-
 		if (Object.keys(this.state.attributes).length > 1) {
+			let attributes = { price: price, quantity: 1 };
+			product.attributes.map((at) => {
+				return (attributes = { ...attributes, [at.name]: at.items[0].value });
+			});
+			attributes = { ...attributes, ...this.state.attributes };
+			this.setState({
+				attributes: { ...this.state.attributes, ...attributes },
+			});
+			
 			if (
 				arrOfName.find(
 					(element) =>
 						element ===
-						`${Object.keys(this.state.attributes)
-							.slice(1)
-							.map((it) => this.state.attributes[it])
+						`${Object.keys(attributes)
+							.slice(2)
+							.map((it) => attributes[it])
 							.join('')} / ${e.target.id}`
 				)
 			) {
 				this.props.addAttributes(e, {
 					price: price,
-					...this.state.attributes,
+					...attributes,
 					quantity:
 						this.props.attributes[
-							`${Object.keys(this.state.attributes)
-								.slice(1)
-								.map((it) => this.state.attributes[it])
+							`${Object.keys(attributes)
+								.slice(2)
+								.map((it) => attributes[it])
 								.join('')} / ${e.target.id}`
 						].quantity + 1,
 				});
 			} else {
+				let attributes = { price: price, quantity: 1 };
+				product.attributes.map((at) => {
+					return (attributes = { ...attributes, [at.name]: at.items[0].value });
+				});
+				attributes = { ...attributes, ...this.state.attributes };
+
 				this.props.addAttributes(e, {
 					price: price,
-					...this.state.attributes,
+					...attributes,
 				});
 			}
 			this.props.addToCart(e.target.id);
@@ -106,6 +116,7 @@ export class PDP extends Component {
 			product.attributes.map((at) => {
 				return (attributes = { ...attributes, [at.name]: at.items[0].value });
 			});
+
 			if (
 				arrOfName.find(
 					(element) =>
@@ -139,123 +150,114 @@ export class PDP extends Component {
 		});
 	};
 
+	getImages = (product) => {
+		return (
+			<div className='product-images'>
+				<ul className='gallery'>
+					{product.gallery.map((item, index) => (
+						<li key={'pdp-li' + index}>
+							<img
+								alt='same product but different'
+								onClick={this.changePic}
+								id={item}
+								src={item}
+								width='50px'
+							></img>
+						</li>
+					))}
+				</ul>
+				<div className='pdp-main-pic-div'>
+					<img
+						className={product.inStock ? 'pdp-main-pic' : 'pdp-main-pic-out'}
+						alt='pdp main product'
+						src={
+							this.state.imgUrl === '' ? product.gallery[0] : this.state.imgUrl
+						}
+					></img>
+					<p className='pdp-out-of-stock-text'>
+						{product.inStock ? '' : 'OUT OF STOCK'}
+					</p>
+				</div>
+			</div>
+		);
+	};
+
+	getAttributes = (product) => {
+		return (
+			<form>
+				{product.attributes.map((attribute, index) => (
+					<div
+						className='product-attributes'
+						key={'product-attributes' + index}
+					>
+						<p>{attribute.name}:</p>
+
+						<div>
+							{attribute.items.map((value, index) => (
+								<div
+									className={
+										attribute.type === 'swatch'
+											? 'product-color-input'
+											: 'attribute-input-div'
+									}
+									key={
+										attribute.type === 'swatch'
+											? 'product-color-input' + index
+											: 'attribute-input-div' + index
+									}
+								>
+									<input
+										defaultChecked={value === attribute.items[0]}
+										onClick={this.setAttributes}
+										className='input-attribute'
+										type='radio'
+										id={
+											attribute.type === 'swatch'
+												? value.value
+												: attribute.name + value.value
+										}
+										name={attribute.name}
+										value={value.value}
+									></input>
+									{attribute.type === 'swatch' ? (
+										<label
+											style={{
+												background: value.value,
+												color: value.value,
+											}}
+											htmlFor={value.value}
+										></label>
+									) : (
+										<label
+											htmlFor={attribute.name + value.value}
+											className='attribut-label'
+										>
+											{value.value}
+										</label>
+									)}
+								</div>
+							))}
+						</div>
+					</div>
+				))}
+			</form>
+		);
+	};
+
 	getDetails = () => {
 		let data = this.props.data;
 		if (data.loading) {
 			return 'Loading...';
 		} else {
-			let id = window.location.href.substring(
-				window.location.href.lastIndexOf('/') + 1
-			);
-			let products = data.categories.map((item) =>
-				item.products.filter((product) => product.id === id)
-			);
-			let [[product]] = products.filter((i) => i.length !== 0);
+			let product = data.product;
 			return (
 				<div className='pdp-div'>
-					<div className='product-images'>
-						<ul className='gallery'>
-							{product.gallery.map((item, index) => (
-								<li key={'pdp-li' + index}>
-									<img
-										alt='same product but different'
-										onClick={this.changePic}
-										id={item}
-										src={item}
-										width='50px'
-									></img>
-								</li>
-							))}
-						</ul>
-						<img
-							className='pdp-main-pic'
-							alt='pdp main product'
-							src={
-								this.state.imgUrl === ''
-									? product.gallery[0]
-									: this.state.imgUrl
-							}
-							width='430px'
-							height='515px'
-						></img>
-					</div>
+					{this.getImages(product)}
 					<div className='about-product'>
 						<h2>{product.brand}</h2>
 						<h2>{product.name}</h2>
-						{product.attributes.length !== 0 ? (
-							<form>
-								{product.attributes.map((attribute, index) => (
-									<div
-										className='product-attributes'
-										key={'product-attributes' + index}
-									>
-										<p>{attribute.name}:</p>
-										{attribute.name === 'Color' ? (
-											<div>
-												{attribute.items.map((value, index) => (
-													<div
-														className='product-color-input'
-														key={'product-color-input' + index}
-													>
-														<input
-															defaultChecked={value === attribute.items[0]}
-															onClick={this.setAttributes}
-															className='input-attribute'
-															type='radio'
-															id={value.value}
-															name={attribute.name}
-															value={value.value}
-														></input>
 
-														<label
-															style={{
-																background: value.value,
-																color: value.value,
-																border: 1,
-																borderColor: '#000',
-																borderStyle: 'solid',
-																opacity: 1,
-																width: 63,
-																height: 45,
-																cursor: 'pointer',
-															}}
-															htmlFor={value.value}
-														></label>
-													</div>
-												))}
-											</div>
-										) : (
-											<div>
-												{attribute.items.map((value, index) => (
-													<div
-														className='attribute-input-div'
-														key={'attribute-input-div' + index}
-													>
-														<input
-															defaultChecked={value === attribute.items[0]}
-															onClick={this.setAttributes}
-															className='input-attribute'
-															type='radio'
-															id={attribute.name + value.value}
-															name={attribute.name}
-															value={value.value}
-														></input>
-														<label
-															htmlFor={attribute.name + value.value}
-															className='attribut-label'
-														>
-															{value.value}
-														</label>
-													</div>
-												))}
-											</div>
-										)}
-									</div>
-								))}
-							</form>
-						) : (
-							''
-						)}
+						{product.attributes.length !== 0 ? this.getAttributes(product) : ''}
 
 						<p className='product-price-name'>PRICE:</p>
 						<p className='product-price-amount'>
@@ -267,8 +269,9 @@ export class PDP extends Component {
 							}
 						</p>
 						<button
+							disabled={!product.inStock}
 							required
-							className='addToCartBtn'
+							className={product.inStock ? 'addToCartBtn' : 'cantAddtoCart'}
 							onClick={this.addItemToCart}
 							id={product.id}
 							value={product}
@@ -276,10 +279,9 @@ export class PDP extends Component {
 							ADD TO CART
 						</button>
 
-						<div
-							dangerouslySetInnerHTML={{ __html: product.description }}
-							className='description'
-						/>
+						<div className='description'>
+							{ReactHtmlParser(product.description)}
+						</div>
 					</div>
 				</div>
 			);
@@ -288,19 +290,20 @@ export class PDP extends Component {
 
 	render() {
 		return (
-			<div>
+			<div
+				onClick={
+					this.props.currencyIsOpen
+						? () => this.props.handleCurrency(false)
+						: ''
+				}
+			>
 				<div>{this.getDetails()}</div>
 				{this.props.cartIsOpen ? (
 					<div
+						class='cart-backdrop'
 						onClick={() => this.props.openCart(false)}
 						style={{
-							width: '100%',
 							height: document.documentElement.offsetHeight,
-							background: 'black',
-							opacity: 0.5,
-							position: 'absolute',
-							top: '79px',
-							left: 0,
 						}}
 					></div>
 				) : (
@@ -319,6 +322,7 @@ const mapStateToProps = (state) => {
 		attributes: state.addAttributes.attributes,
 		numberofItems: state.changeQuantity.cartQuantity,
 		cartIsOpen: state.openCart.cartIsOpen,
+		currencyIsOpen: state.currencyIsOpen.currencyIsOpen,
 	};
 };
 const mapDispatchToProps = (dispatch) => {
@@ -335,8 +339,17 @@ const mapDispatchToProps = (dispatch) => {
 		openCart: (value) => {
 			dispatch(openCartAction(value));
 		},
+		handleCurrency: (value) => {
+			dispatch(currencyOpenAction(value));
+		},
 	};
 };
-export default graphql(DETAILS)(
-	connect(mapStateToProps, mapDispatchToProps)(PDP)
-);
+export default graphql(DETAILS, {
+	options: (props) => ({
+		variables: {
+			id: window.location.href.substring(
+				window.location.href.lastIndexOf('/') + 1
+			),
+		},
+	}),
+})(connect(mapStateToProps, mapDispatchToProps)(PDP));

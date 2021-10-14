@@ -15,34 +15,41 @@ import {
 	openCartAction,
 	incrementQuantityAction,
 	deleteItemAction,
+	currencyOpenAction,
 } from '../redux/actions/actions';
 import { setCategoryAction } from '../redux/actions/actions';
+import header from '../styles/header.css';
 const CATEGORY = gql`
-	{
+	query getCategory($title: String!) {
 		categories {
 			name
+		}
+		currencies
+		category(input: { title: $title }) {
+			name
 			products {
-				id
-				description
+				name
 				category
+				id
 				name
 				brand
 				gallery
+				inStock
+				prices {
+					currency
+					amount
+				}
 				attributes {
 					id
 					name
+					type
 					items {
 						displayValue
 						value
 					}
 				}
-				prices {
-					currency
-					amount
-				}
 			}
 		}
-		currencies
 	}
 `;
 
@@ -51,7 +58,6 @@ export class Header extends Component {
 		super(props);
 		this.getCategory = this.getCategory.bind(this);
 		this.state = {
-			currencyIsOpen: false,
 			cartIsOpen: false,
 			currencies: {
 				USD: '$',
@@ -65,16 +71,16 @@ export class Header extends Component {
 	}
 	updateCurrency = (e) => {
 		this.props.changeCurrency(e.target.id);
-		this.setState({
-			currencyIsOpen: !this.state.currencyIsOpen,
-		});
+		this.props.handleCurrency(false);
 	};
 	updateCategory = (e) => {
 		this.props.setCategory(e.target.id);
 		this.props.openCart(false);
 	};
+
 	getCategory() {
 		let data = this.props.data;
+		console.log(data);
 		if (data.loading) {
 			return '';
 		} else {
@@ -108,18 +114,12 @@ export class Header extends Component {
 		}
 	}
 	openCart = () => {
-		this.setState({
-			cartIsOpen: !this.state.cartIsOpen,
-			currencyIsOpen: false,
-		});
+		this.props.handleCurrency(false);
 		this.props.openCart(!this.props.cartIsOpen);
 	};
 
 	openCurrency() {
-		this.setState({
-			currencyIsOpen: !this.state.currencyIsOpen,
-			cartIsOpen: false,
-		});
+		this.props.handleCurrency(!this.props.currencyIsOpen);
 		this.props.openCart(false);
 	}
 
@@ -162,17 +162,61 @@ export class Header extends Component {
 			</p>
 		);
 	};
+	getAttributes = (cartProduct, id) => {
+		return cartProduct.attributes.map((att, index) => (
+			<form key={'header-form' + index}>
+				<div>
+					<p>{att.name}</p>
+					<div className='cart-attributes-div'>
+						{att.items.map((item, index) => (
+							<div
+								key={
+									att.type === 'swatch'
+										? 'cart-color-attributes' + index
+										: 'cart-attributes' + index
+								}
+								className={
+									att.type === 'swatch'
+										? 'cart-color-attributes'
+										: 'cart-attributes'
+								}
+							>
+								<input
+									defaultChecked={
+										this.props.attributes[id][att.name] === item.value
+									}
+									type='radio'
+									name={att.name}
+									id={item.value}
+									value={item.value}
+									disabled
+								></input>
+								{att.type === 'swatch' ? (
+									<label
+										htmlFor={item.value}
+										style={{
+											background: item.value,
+											color: item.value,
+										}}
+									></label>
+								) : (
+									<label htmlFor={item.value}>{item.value}</label>
+								)}
+							</div>
+						))}
+					</div>
+				</div>
+			</form>
+		));
+	};
 	createCart = (id, index) => {
 		let data = this.props.data;
 		if (data.loading) {
 			return 'Loading ...';
 		} else {
-			let cartProducts = data.categories.map((item) =>
-				item.products.filter(
-					(product) => product.id === id.substring(id.lastIndexOf('/') + 2)
-				)
+			let cartProduct = data.category.products.find(
+				(product) => product.id === id.substring(id.lastIndexOf('/') + 2)
 			);
-			let [[cartProduct]] = cartProducts.filter((i) => i.length !== 0);
 
 			return (
 				<div className='cart-nav-wrapper' key={'cart-nav-wrapper' + index}>
@@ -189,74 +233,7 @@ export class Header extends Component {
 						</p>
 						<div>
 							{cartProduct.attributes.length !== 0
-								? cartProduct.attributes.map((att, index) => (
-										<form key={'header-form' + index}>
-											{att.name === 'Color' ? (
-												<div>
-													<p>{att.name}</p>
-
-													<div className='cart-attributes-div'>
-														{att.items.map((item, index) => (
-															<div
-																key={'cart-color-attributes' + index}
-																className='cart-color-attributes'
-															>
-																<input
-																	defaultChecked={
-																		this.props.attributes[id][att.name] ===
-																		item.value
-																	}
-																	type='radio'
-																	name={att.name}
-																	id={item.value}
-																	value={item.value}
-																	disabled
-																></input>
-																<label
-																	htmlFor={item.value}
-																	style={{
-																		background: item.value,
-																		color: item.value,
-																		display: 'inline-block',
-																		border: 1,
-																		borderColor: '#000',
-																		borderStyle: 'solid',
-																		width: 20,
-																		height: 20,
-																	}}
-																></label>
-															</div>
-														))}
-													</div>
-												</div>
-											) : (
-												<div>
-													<p>{att.name}</p>
-													<div className='cart-attributes-div'>
-														{att.items.map((item, index) => (
-															<div
-																key={'cart-attributes' + index}
-																className='cart-attributes'
-															>
-																<input
-																	defaultChecked={
-																		this.props.attributes[id][att.name] ===
-																		item.value
-																	}
-																	type='radio'
-																	name={att.name}
-																	id={item.value}
-																	value={item.value}
-																	disabled
-																></input>
-																<label htmlFor={item.value}>{item.value}</label>
-															</div>
-														))}
-													</div>
-												</div>
-											)}
-										</form>
-								  ))
+								? this.getAttributes(cartProduct, id)
 								: ''}
 						</div>
 					</div>
@@ -279,15 +256,11 @@ export class Header extends Component {
 							</button>
 						</div>
 						<Link
+							className='nav-cart-pic-link'
 							to={`/id/${id.substring(id.lastIndexOf('/') + 2)}`}
 							onClick={() => this.props.openCart(false)}
 						>
-							<img
-								alt='product in cart'
-								src={cartProduct.gallery[0]}
-								width='160px'
-								height='170px'
-							></img>
+							<img alt='product in cart' src={cartProduct.gallery[0]}></img>
 						</Link>
 					</div>
 				</div>
@@ -298,9 +271,18 @@ export class Header extends Component {
 	render() {
 		return (
 			<div>
-				<div className='nav-container'>
+				<div
+					onClick={
+						this.props.cartIsOpen
+							? () => this.props.openCart(false)
+							: this.props.currencyIsOpen
+							? () => this.props.handleCurrency(false)
+							: ''
+					}
+					className='nav-container'
+				>
 					<div className='nav-buttons'>{this.getCategory()}</div>
-					<Link to='/category/'>
+					<Link to='/'>
 						<img className='logo' src={LOGO} alt='logo'></img>
 					</Link>
 					<div className='currency-cart'>
@@ -310,7 +292,7 @@ export class Header extends Component {
 								<img src={dropDown} alt='dropdown'></img>
 							</button>
 
-							{this.state.currencyIsOpen ? (
+							{this.props.currencyIsOpen ? (
 								<div className='currency-div'>{this.getCurrency()}</div>
 							) : (
 								''
@@ -325,39 +307,36 @@ export class Header extends Component {
 								''
 							)}
 
-							{this.props.cartIsOpen ? (
-								<div className='cart-in-nav'>
-									<div className='my-bag'>
-										<span>My Bag,</span> {this.props.numberofItems} items
-									</div>
-									<div>
-										{Object.keys(this.props.attributes).map((item, index) => {
-											return this.createCart(item, index);
-										})}
-									</div>
-									<div className='total-price'>
-										<p>Total</p>
-										{this.getTotalPrice()}
-									</div>
-
-									<div className='nav-cart-buttons'>
-										<Link
-											to={`/cart`}
-											onClick={() => this.props.openCart(false)}
-										>
-											<button>VIEW BAG</button>
-										</Link>
-										<button id='nav-cart-checkOut'>CHECK OUT</button>
-									</div>
-								</div>
-							) : (
-								''
-							)}
-
 							<img onClick={this.openCart} src={emptyCart} alt='cart'></img>
 						</div>
 					</div>
 				</div>
+				{this.props.cartIsOpen ? (
+					<div className='cart-in-nav'>
+						<div className='my-bag'>
+							<span>My Bag,</span> {this.props.numberofItems} items
+						</div>
+						<div>
+							{Object.keys(this.props.attributes).map((item, index) => {
+								console.log(this.props.attributes);
+								return this.createCart(item, index);
+							})}
+						</div>
+						<div className='total-price'>
+							<p>Total</p>
+							{this.getTotalPrice()}
+						</div>
+
+						<div className='nav-cart-buttons'>
+							<Link to={`/cart`} onClick={() => this.props.openCart(false)}>
+								<button>VIEW BAG</button>
+							</Link>
+							<button id='nav-cart-checkOut'>CHECK OUT</button>
+						</div>
+					</div>
+				) : (
+					''
+				)}
 			</div>
 		);
 	}
@@ -370,6 +349,7 @@ const mapStateToProps = (state) => {
 		itemList: state.addItem.cartProducts,
 		attributes: state.addAttributes.attributes,
 		cartIsOpen: state.openCart.cartIsOpen,
+		currencyIsOpen: state.currencyIsOpen.currencyIsOpen,
 	};
 };
 
@@ -401,9 +381,16 @@ const mapDispatchToProps = (dispatch) => {
 		deleteItem: (id, attributes) => {
 			dispatch(deleteItemAction(id, attributes));
 		},
+		handleCurrency: (value) => {
+			dispatch(currencyOpenAction(value));
+		},
 	};
 };
 
-export default graphql(CATEGORY)(
-	connect(mapStateToProps, mapDispatchToProps)(Header)
-);
+export default graphql(CATEGORY, {
+	options: (props) => ({
+		variables: {
+			title: '',
+		},
+	}),
+})(connect(mapStateToProps, mapDispatchToProps)(Header));

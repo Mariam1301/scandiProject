@@ -1,4 +1,5 @@
 export const CART_IS_OPEN = 'CART_IS_OPEN';
+export const HANDLE_CURRENCY = 'HANDLE_CURRENCY';
 export const OPEN_CURRENCY = 'OPEN_CURRENCY';
 export const SET_CATEGORY = 'SET_CATEGORY';
 export const CHANGE_CURRENCY = 'CHANGE_CURRENCY';
@@ -11,6 +12,13 @@ export const INCREMNET_QUANTITY = 'INCREMNET_QUANTITY';
 export const DECREMENT_QUANTITY = 'DECREMENT_QUANTITY';
 export const CHANGE_ATTRIBUTE = 'CHANGE_ATTRIBUTE';
 export const DELETE_ITEM = 'DELETE_ITEM';
+
+export const currencyOpenAction = (value) => {
+	return {
+		type: HANDLE_CURRENCY,
+		value: value,
+	};
+};
 export const changeCurrencyAction = (id) => {
 	return {
 		type: CHANGE_CURRENCY,
